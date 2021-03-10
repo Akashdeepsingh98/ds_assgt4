@@ -1,4 +1,5 @@
 import sys
+import os 
 
 TUPLE_PER_BLOCK = 100
 
@@ -75,6 +76,12 @@ def fun_openSR(Rfn, M):
             fileheap = fileheap[1:]
             intermedfiles[top[0]].close()
         fileheap.sort(key=lambda x: x[1][1])
+        lastfinalfile = open('finalR'+str(final_fnum)+'.txt','r')
+    if not lastfinalfile.readline():
+        lastfinalfile.close()
+        os.remove('finalR'+str(final_fnum)+'.txt')
+    for i in range(intermed_fnum):
+        os.remove('intermedR'+str(i)+'.txt')
     return final_fnum
 
 
