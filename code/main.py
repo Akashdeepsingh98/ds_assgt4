@@ -34,36 +34,32 @@ def fun_openSM(Rfn, Sfn, M):
     fileheap = []
     intermedfiles = []
     for i in range(intermed_fnum):
-        #intermedfile = open('intermedR'+str(i)+'.txt', 'r')
-        #t = intermedfile.readline()
-        # intermedfiles.append(intermedfile)
         intermedfiles.append(open('intermedR'+str(i)+'.txt', 'r'))
         t = intermedfiles[-1].readline()
         rowlist = t.strip().split(' ')
         fileheap.append([i, rowlist])
-        # intermedfile.close()
     fileheap.sort(key=lambda x: x[1][1])
 
-    BR = 0  # final sublist number, also the number of blocks
-    count = 0  # count number of tuples written in a final file
-    finalfile = open('finalR'+str(BR)+'.txt', 'w')
+    BR = 0  # block sublist number, also the number of blocks
+    count = 0  # count number of tuples written in a block file
+    blockfile = open('blockR'+str(BR)+'.txt', 'w')
     intermeds_done = 0
     while intermeds_done < intermed_fnum:
         top = fileheap[0]
 
-        # write line in final file
+        # write line in block file
         # if count of lines written gets bigger than M*TUPLE_PER_BLOCK
-        # then open a new final file for writing
+        # then open a new block file for writing
         line = top[1][0]+' '+top[1][1]+'\n'
-        finalfile.write(line)
+        blockfile.write(line)
         count += 1
         if count >= M*TUPLE_PER_BLOCK:
-            finalfile.close()
+            blockfile.close()
             BR += 1
-            finalfile = open('finalR'+str(BR)+'.txt', 'w')
+            blockfile = open('blockR'+str(BR)+'.txt', 'w')
             count = 0
 
-        # get a newline from the file from which we just wrote in final file.
+        # get a newline from the file from which we just wrote in block file.
         # if file is exhausted close it, and increment intermeds_done.
         # also get rid of first element in fileheap
         # otherwise split the line into a list and replace
@@ -76,20 +72,20 @@ def fun_openSM(Rfn, Sfn, M):
             fileheap = fileheap[1:]
             intermedfiles[top[0]].close()
         fileheap.sort(key=lambda x: x[1][1])
-    finalfile.close()
+    blockfile.close()
 
     # get rid of intermediate files
     for i in range(intermed_fnum):
         os.remove('intermedR'+str(i)+'.txt')
 
-    # if last final file is empty delete it.
+    # if last block file is empty delete it.
     # if there is some content then incrmement BR by 1
-    lastfinalfile = open('finalR'+str(BR)+'.txt', 'r')
-    if not lastfinalfile.readline():
-        lastfinalfile.close()
-        os.remove('finalR'+str(BR)+'.txt')
+    lastblockfile = open('blockR'+str(BR)+'.txt', 'r')
+    if not lastblockfile.readline():
+        lastblockfile.close()
+        os.remove('blockR'+str(BR)+'.txt')
     else:
-        lastfinalfile.close()
+        lastblockfile.close()
         BR += 1
 
     # Work on Relation S here.
@@ -123,39 +119,26 @@ def fun_openSM(Rfn, Sfn, M):
     fileheap = []
     intermedfiles = []
     for i in range(intermed_fnum):
-        #intermedfile = open('intermedR'+str(i)+'.txt', 'r')
-        #t = intermedfile.readline()
-        # intermedfiles.append(intermedfile)
         intermedfiles.append(open('intermedS'+str(i)+'.txt', 'r'))
         t = intermedfiles[-1].readline()
         rowlist = t.strip().split(' ')
         fileheap.append([i, rowlist])
-        # intermedfile.close()
     fileheap.sort(key=lambda x: x[1][1])
 
-    BS = 0  # final sublist number, also the number of blocks
-    count = 0  # count number of tuples written in a final file
-    finalfile = open('finalS'+str(BS)+'.txt', 'w')
+    BS = 0  # block sublist number, also the number of blocks
+    count = 0  # count number of tuples written in a block file
+    blockfile = open('blockS'+str(BS)+'.txt', 'w')
     intermeds_done = 0
     while intermeds_done < intermed_fnum:
         top = fileheap[0]
-
-        # write line in final file
-        # if count of lines written gets bigger than M*TUPLE_PER_BLOCK
-        # then open a new final file for writing
         line = top[1][0]+' '+top[1][1]+'\n'
-        finalfile.write(line)
+        blockfile.write(line)
         count += 1
         if count >= M*TUPLE_PER_BLOCK:
-            finalfile.close()
+            blockfile.close()
             BS += 1
-            finalfile = open('finalS'+str(BS)+'.txt', 'w')
+            blockfile = open('blockS'+str(BS)+'.txt', 'w')
             count = 0
-
-        # get a newline from the file from which we just wrote in final file.
-        # if file is exhausted close it, and increment intermeds_done.
-        # also get rid of first element in fileheap
-        # otherwise split the line into a list and replace
         newline = intermedfiles[top[0]].readline()
         if newline:
             rowlist = newline.strip().split()
@@ -165,20 +148,17 @@ def fun_openSM(Rfn, Sfn, M):
             fileheap = fileheap[1:]
             intermedfiles[top[0]].close()
         fileheap.sort(key=lambda x: x[1][1])
-    finalfile.close()
+    blockfile.close()
 
-    # get rid of intermediate files
     for i in range(intermed_fnum):
         os.remove('intermedS'+str(i)+'.txt')
 
-    # if last final file is empty delete it.
-    # if there is some content then incrmement BR by 1
-    lastfinalfile = open('finalS'+str(BS)+'.txt', 'r')
-    if not lastfinalfile.readline():
-        lastfinalfile.close()
-        os.remove('finalS'+str(BS)+'.txt')
+    lastblockfile = open('blockS'+str(BS)+'.txt', 'r')
+    if not lastblockfile.readline():
+        lastblockfile.close()
+        os.remove('blockS'+str(BS)+'.txt')
     else:
-        lastfinalfile.close()
+        lastblockfile.close()
         BS += 1
 
     return BR, BS
@@ -187,7 +167,11 @@ def fun_openSM(Rfn, Sfn, M):
 def fun_SortMerge(Rfn, Sfn, M):
     # first deal with R, then with S
     BR, BS = fun_openSM(Rfn, Sfn, M)
-    print(BR, BS)
+    if BR+BS > M**2:
+        print("Too many blocks")
+        return
+    while True:
+        break 
 
 
 def main():
