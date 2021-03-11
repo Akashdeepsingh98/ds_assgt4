@@ -162,80 +162,6 @@ def fun_openSM(Rfn, Sfn, M):
         BS += 1
 
     return BR, BS, open('blockR0.txt', 'r'), open('blockS0.txt', 'r')
-#
-#
-# def fun_getNextSM(blockR, blockS, M, tR, tS, curbR, curbS, BR, BS):
-#
-#    # if no tuples read yet then read them
-#    # if tR == None and tS == None:
-#    #    tR = blockR.readline().strip().split(' ')
-#    #    tS = blockS.readline().strip().split(' ')
-#    #    while tR[1]<tS[0]:
-#    #        tR
-#
-#    # get next tuple from S.
-#    # if no lines left, then open next block and read line
-#    # if no blocks left then we are done joining and return.
-#    tS = blockS.readline()
-#    if not tS:
-#        curbS += 1
-#        if curbS >= BS:
-#            return tR, None, blockR, blockS, curbR, curbS
-#        else:
-#            blockS.close()
-#            blockS = open('blockS'+str(curbS)+'.txt', 'r')
-#            tS = blockS.readline().strip().split(' ')
-#    else:
-#        tS = tS.strip().split(' ')
-#
-#    while True:
-#        # if we already have same y then simply return data.
-#        if tR==None:
-#            tR = blockR.readline()
-#            if not tR:
-#                curbR += 1
-#                if curbR >= BR:
-#                    return None, tS, blockR, blockS, curbR, curbS
-#                else:
-#                    blockR.close()
-#                    blockR = open('blockR'+str(curbR)+'.txt', 'r')
-#                    tR = blockR.readline().strip().split()
-#            else:
-#                tR = tR.strip().split()
-#
-#        if tS[0] == tR[1]:
-#
-#            return tR, tS, blockR, blockS, curbR, curbS
-#
-#        # otherwise go through R
-#        elif tS[0]>tR[1]:
-#            tR = blockR.readline()
-#            if not tR:
-#                curbR += 1
-#                if curbR >= BR:
-#                    return None, tS, blockR, blockS, curbR, curbS
-#                else:
-#                    blockR.close()
-#                    blockR = open('blockR'+str(curbR)+'.txt', 'r')
-#                    tR = blockR.readline().strip().split()
-#            else:
-#                tR = tR.strip().split()
-#
-#        # in this case get new S tuples until possible.
-#        elif tS[0] < tR[1]:
-#            tS = blockS.readline()
-#            if not tS:
-#                curbS += 1
-#                if curbS >= BS:
-#                    return tR, None, blockR, blockS, curbR, curbS
-#                else:
-#                    blockS.close()
-#                    blockS = open('blockS'+str(curbS)+'.txt', 'r')
-#                    tS = blockS.readline().strip().split(' ')
-#            else:
-#                tS = tS.strip().split(' ')
-#
-#    return tR, tS, blockR, blockS, curbR, curbS
 
 
 def fun_getNextS(rel, B, curb, blockptr, startline):
@@ -331,8 +257,6 @@ def fun_SortMerge(Rfn, Sfn, M):
     curbR, curbS = 0, 0
     countR, curbR, blockR, startR = fun_getNextS('R', BR, curbR, blockR, 0)
     countS, curbS, blockS, startS = fun_getNextS('S', BS, curbS, blockS, 0)
-    #print(countR, startR)
-    # return
     while countR > 0 and countS > 0:
         #input()
         Rset = open('Rset.txt', 'r')
@@ -343,8 +267,6 @@ def fun_SortMerge(Rfn, Sfn, M):
         Sset.close()
 
         if tR.strip().split(' ')[1] == tS.strip().split(' ')[0]:
-            #print(tR.strip(), end=' ')
-            # print(tS)
             fun_cartesian(joinfile)
             countR, curbR, blockR, startR = fun_getNextS(
                 'R', BR, curbR, blockR, startR)
@@ -356,22 +278,6 @@ def fun_SortMerge(Rfn, Sfn, M):
         else:
             countS, curbS, blockS, startS = fun_getNextS(
                 'S', BS, curbS, blockS, startS)
-    #bufferSwrite = open('bufferS.txt','w')
-    #bufferSread = open('bufferS.txt', 'r')
-    # tR, tS, blockR, blockS, curbR, curbS = fun_getNextSM(
-    #    blockR, blockS, M, None, None, curbR, curbS, BR, BS)
-    # while True:
-    #    tR, tS, blockR, blockS, curbR, curbS = fun_getNextSM(
-    #        blockR, blockS, M, tR, tS, curbR, curbS, BR, BS)
-    #    if tR == None or tS == None:
-    #        joinfile.writelines(lines)
-    #        break
-    #    line = tR[0]+' '+tR[1]+' '+tS[1]+'\n'
-    #    lines.append(line)
-    #    if len(lines) >= M*TUPLE_PER_BLOCK:
-    #        joinfile.writelines(lines)
-    #        lines = []
-
     joinfile.close()
 
 
@@ -384,8 +290,6 @@ def test():
         s = S.readline()
         while s:
             if r.strip().split(' ')[1] == s.strip().split(' ')[0]:
-                #print(r.strip(), end=' ')
-                # print(s)
                 outputfile.write(r.strip()+' '+s)
             s = S.readline()
         r = R.readline()
