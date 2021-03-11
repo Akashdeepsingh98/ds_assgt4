@@ -252,7 +252,7 @@ def fun_SortMerge(Rfn, Sfn, M):
         print("Too many blocks")
         return
 
-    joinfile = open('joinfile.txt', 'w')
+    joinfile = open(os.path.basename(Rfn)+'_'+os.path.basename(Sfn)+'_join.txt', 'w')
     lines = []
     curbR, curbS = 0, 0
     countR, curbR, blockR, startR = fun_getNextS('R', BR, curbR, blockR, 0)
@@ -279,6 +279,16 @@ def fun_SortMerge(Rfn, Sfn, M):
             countS, curbS, blockS, startS = fun_getNextS(
                 'S', BS, curbS, blockS, startS)
     joinfile.close()
+    blockR.close()
+    blockS.close()
+    if os.path.exists('Rset.txt'):
+        os.remove('Rset.txt')
+    if os.path.exists('Sset.txt'):
+        os.remove('Sset.txt')
+    for i in range(BR):
+        os.remove('blockR'+str(i)+'.txt')
+    for i in range(BS):
+        os.remove('blockS'+str(i)+'.txt')
 
 
 def test():
@@ -301,8 +311,7 @@ def main():
     Sfn = sys.argv[2]  # filename of S
     join_type = sys.argv[3]
     M = int(sys.argv[4])
-    test()
-    # return
+    #test()
     if join_type == 'sort':
         fun_SortMerge(Rfn, Sfn, M)
         pass
