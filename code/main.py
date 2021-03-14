@@ -10,7 +10,7 @@ def fun_openSM(Rfn, Sfn, M):
     canread = True
     while canread:
         lines = []
-        for i in range(M*TUPLE_PER_BLOCK):
+        for i in range(TUPLE_PER_BLOCK):
             t = Rfile.readline()
             if not t:
                 canread = False
@@ -53,7 +53,7 @@ def fun_openSM(Rfn, Sfn, M):
         line = top[1][0]+' '+top[1][1]+'\n'
         blockfile.write(line)
         count += 1
-        if count >= M*TUPLE_PER_BLOCK:
+        if count >= TUPLE_PER_BLOCK:
             blockfile.close()
             BR += 1
             blockfile = open('blockR'+str(BR)+'.txt', 'w')
@@ -95,7 +95,7 @@ def fun_openSM(Rfn, Sfn, M):
     canread = True
     while canread:
         lines = []
-        for i in range(M*TUPLE_PER_BLOCK):
+        for i in range(TUPLE_PER_BLOCK):
             t = Sfile.readline()
             if not t:
                 canread = False
@@ -134,7 +134,7 @@ def fun_openSM(Rfn, Sfn, M):
         line = top[1][0]+' '+top[1][1]+'\n'
         blockfile.write(line)
         count += 1
-        if count >= M*TUPLE_PER_BLOCK:
+        if count >= TUPLE_PER_BLOCK:
             blockfile.close()
             BS += 1
             blockfile = open('blockS'+str(BS)+'.txt', 'w')
@@ -252,13 +252,14 @@ def fun_SortMerge(Rfn, Sfn, M):
         print("Too many blocks")
         return
 
-    joinfile = open(os.path.basename(Rfn)+'_'+os.path.basename(Sfn)+'_join.txt', 'w')
+    joinfile = open(os.path.basename(Rfn)+'_' +
+                    os.path.basename(Sfn)+'_join.txt', 'w')
     lines = []
     curbR, curbS = 0, 0
     countR, curbR, blockR, startR = fun_getNextS('R', BR, curbR, blockR, 0)
     countS, curbS, blockS, startS = fun_getNextS('S', BS, curbS, blockS, 0)
     while countR > 0 and countS > 0:
-        #input()
+        # input()
         Rset = open('Rset.txt', 'r')
         Sset = open('Sset.txt', 'r')
         tR = Rset.readline()
@@ -291,6 +292,22 @@ def fun_SortMerge(Rfn, Sfn, M):
         os.remove('blockS'+str(i)+'.txt')
 
 
+def fun_openHJ(Rfn, Sfn, M):
+    Rsize = os.path.getsize(Rfn)
+    Ssize = os.path.getsize(Sfn)
+    if Rsize > Ssize:
+        smallerfn = Rfn
+        biggerfn = Sfn
+    else:
+        smallerfn = Sfn
+        biggerfn = Rfn
+    
+
+
+def fun_HashJoin(Rfn, Sfn, M):
+    BR, BS, blockR, blockS = fun_openHJ(Rfn, Sfn, M)
+
+
 def test():
     R = open('..\inputR', 'r')
     outputfile = open('mytest.txt', 'w')
@@ -311,7 +328,7 @@ def main():
     Sfn = sys.argv[2]  # filename of S
     join_type = sys.argv[3]
     M = int(sys.argv[4])
-    #test()
+    # test()
     if join_type == 'sort':
         fun_SortMerge(Rfn, Sfn, M)
         pass
