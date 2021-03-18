@@ -2,6 +2,7 @@ from os.path import join
 import sys
 import os
 import glob
+import time
 
 TUPLE_PER_BLOCK = 100
 
@@ -212,7 +213,7 @@ def fun_getNextS(rel, B, curb, blockptr, startline):
             if not tS:
                 curb += 1
                 if curb >= B:
-                    return count, curb, blockptr, 0
+                    return count, curb, blockptr, startline
                 else:
                     blockptr.close()
                     blockptr = open('blockS'+str(curb)+'.txt', 'r')
@@ -457,17 +458,21 @@ def test():
 
 
 def main():
+    
     Rfn = sys.argv[1]  # filename of R
     Sfn = sys.argv[2]  # filename of S
     join_type = sys.argv[3]
     M = int(sys.argv[4])
-    test()
+    #test()
+    start = time.time()
     if join_type == 'sort':
         fun_SortMerge(Rfn, Sfn, M)
-        pass
     else:
         fun_HashJoin(Rfn, Sfn, M)
-        pass
+    end = time.time()
+    tf = open('timing.txt', 'a')
+    tf.write(str(M) + ' ' + str(end-start)+'\n')
+    tf.close()
 
 
 if __name__ == '__main__':
