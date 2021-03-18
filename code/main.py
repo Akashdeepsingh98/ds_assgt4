@@ -355,75 +355,68 @@ def fun_openHJ(Rfn, Sfn, M):
         Sfptrs[i].close()
 
     return Rfiledata, Sfiledata
-    '''
-    Rsize = os.path.getsize(Rfn)
-    Ssize = os.path.getsize(Sfn)
-    if Rsize > Ssize:
-        Sfptr = open(Sfn, 'r')
-        while True:
-            line = Sfptr.readline()
-            if not line:
-                break
-            rowlist = line.strip().split(' ')
-            bucket = open('buck'+rowlist[0], 'a')
-            bucket.write(rowlist[1]+' ')
-            bucket.close()
-        Sfptr.close()
-
-        Rfptr = open(Rfn, 'r')
-        numRblk = 0
-        count = 0
-        Rblk = open('blockR0.txt', 'w')
-        while True:
-            line = Rfptr.readline()
-            if not line:
-                break
-            count += 1
-            if count == TUPLE_PER_BLOCK:
-                count = 0
-                numRblk += 1
-                Sblk.close()
-                Sblk = open('blockR'+str(numRblk)+'.txt', 'w')
-            Rblk.write(line)
-        Rblk.close()
-        Rfptr.close()
-        return numRblk
-    else:
-        Rfptr = open(Rfn, 'r')
-        while True:
-            line = Rfptr.readline()
-            if not line:
-                break
-            rowlist = line.strip().split(' ')
-            bucket = open('buck'+rowlist[1], 'a')
-            bucket.write(rowlist[0]+' ')
-            bucket.close()
-        Rfptr.close()
-
-        Sfptr = open(Sfn, 'r')
-        numSblk = 0
-        count = 0
-        Sblk = open('blockS0.txt', 'w')
-        while True:
-            line = Sfptr.readline()
-            if not line:
-                break
-            count += 1
-            if count == TUPLE_PER_BLOCK:
-                count = 0
-                numSblk += 1
-                Sblk.close()
-                Sblk = open('blockS'+str(numSblk)+'.txt', 'w')
-            Sblk.write(line)
-        Sblk.close()
-        Sfptr.close()
-        return numSblk
-        '''
 
 
-def fun_list2lols(l):
-    for i in range(len(l)):
-        t = None
+def fun_getNextHJR(Rfiledata, Sfiledata, i, joinfile):
+    Rbucket = Rfiledata[i]  # data about ith bucket of R
+    Sbucket = Sfiledata[i]
+    # go over each R bucket file one by one.
+    # for each file get all lines and prepare a dictionary Rd to store a list for each Y value.
+    for j in range(Rbucket[0]+1):
+        Rfile = open('sublistR'+str(i)+'_'+str(j)+'.txt')
+        allRlines = Rfile.readlines()
+        Rfile.close()
+        Rd = {}
+        for w in range(len(allRlines)):
+            rowlist = allRlines[w].strip().split(' ')
+            if rowlist[1] in Rd.keys():
+                Rd[rowlist[1]].append(rowlist[0])
+            else:
+                Rd[rowlist[1]] = [rowlist[0]]
+
+        for k in range(Sbucket[0]+1):
+            Sfile = open('sublistS'+str(i)+'_'+str(k)+'.txt')
+            allSlines = Sfile.readlines()
+            Sfile.close()
+            for w in range(len(allSlines)):
+                rowlist = allSlines[w].strip().split(' ')
+                if rowlist[0] in Rd.keys():
+                    t = []
+                    for z in range(len(Rd[rowlist[0]])):
+                        t.append(Rd[rowlist[0]][z]+' ' +
+                                 rowlist[0]+' '+rowlist[1]+'\n')
+                    joinfile.writelines(t)
+
+
+def fun_getNextHJS(Sfiledata, Rfiledata, i, joinfile):
+    Sbucket = Sfiledata[i]  # data about ith bucket of R
+    Rbucket = Rfiledata[i]
+    # go over each R bucket file one by one.
+    # for each file get all lines and prepare a dictionary Rd to store a list for each Y value.
+    for j in range(Sbucket[0]+1):
+        Sfile = open('sublistS'+str(i)+'_'+str(j)+'.txt')
+        allSlines = Sfile.readlines()
+        Sfile.close()
+        Sd = {}
+        for w in range(len(allSlines)):
+            rowlist = allSlines[w].strip().split(' ')
+            if rowlist[0] in Sd.keys():
+                Sd[rowlist[0]].append(rowlist[1])
+            else:
+                Sd[rowlist[0]] = [rowlist[1]]
+
+        for k in range(Rbucket[0]+1):
+            Rfile = open('sublistR'+str(i)+'_'+str(k)+'.txt')
+            allRlines = Rfile.readlines()
+            Rfile.close()
+            for w in range(len(allRlines)):
+                rowlist = allRlines[w].strip().split(' ')
+                if rowlist[1] in Sd.keys():
+                    t = []
+                    for z in range(len(Sd[rowlist[1]])):
+                        t.append(rowlist[0]+' '+rowlist[1] +
+                                 ' '+Sd[rowlist[1]][z]+'\n')
+                    joinfile.writelines(t)
 
 
 def fun_HashJoin(Rfn, Sfn, M):
@@ -433,40 +426,15 @@ def fun_HashJoin(Rfn, Sfn, M):
     joinfile = open(os.path.basename(Rfn)+'_' +
                     os.path.basename(Sfn)+'_join.txt', 'w')
 
-    # i is bucket number.
-    # go over each bucket one by one and each file of each bucket.
-    for i in range(NUM_BUCKETS):
+    Rsize = os.path.getsize(Rfn)
+    Ssize = os.path.getsize(Sfn)
 
-        Rbucket = Rfiledata[i]  # data about ith bucket of R
-        Sbucket = Sfiledata[i]
-
-        # go over each R bucket file one by one.
-        # for each file get all lines and prepare a dictionary Rd to store a list for each Y value.
-        for j in range(Rbucket[0]+1):
-            Rfile = open('sublistR'+str(i)+'_'+str(j)+'.txt')
-            allRlines = Rfile.readlines()
-            Rfile.close()
-            Rd = {}
-            for w in range(len(allRlines)):
-                rowlist = allRlines[w].strip().split(' ')
-                if rowlist[1] in Rd.keys():
-                    Rd[rowlist[1]].append(rowlist[0])
-                else:
-                    Rd[rowlist[1]] = [rowlist[0]]
-
-            for k in range(Sbucket[0]+1):
-                Sfile = open('sublistS'+str(i)+'_'+str(k)+'.txt')
-                allSlines = Sfile.readlines()
-                Sfile.close()
-                for w in range(len(allSlines)):
-                    rowlist = allSlines[w].strip().split(' ')
-                    if rowlist[0] in Rd.keys():
-                        t = []
-                        for z in range(len(Rd[rowlist[0]])):
-                            t.append(Rd[rowlist[0]][z]+' '+rowlist[0]+' '+rowlist[1]+'\n')
-                        #joinfile.write(Rd[rowlist[0]]+' ' +
-                        #               rowlist[0]+' '+rowlist[1]+'\n')
-                        joinfile.writelines(t)
+    if Rsize < Ssize:
+        for i in range(NUM_BUCKETS):
+            fun_getNextHJR(Rfiledata, Sfiledata, i, joinfile)
+    else:
+        for i in range(NUM_BUCKETS):
+            fun_getNextHJS(Sfiledata, Rfiledata, i, joinfile)
 
     joinfile.close()
     for filename in glob.glob('sublist*'):
