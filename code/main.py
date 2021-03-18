@@ -1,5 +1,7 @@
+from os.path import join
 import sys
 import os
+import glob
 
 TUPLE_PER_BLOCK = 100
 
@@ -15,8 +17,6 @@ def fun_openSM(Rfn, Sfn, M):
             if not t:
                 canread = False
                 break
-#           if t[-1]=='\n':
-#               t = t[:-1]
             rowlist = t.strip().split(' ')
             lines.append(rowlist)
 
@@ -100,8 +100,6 @@ def fun_openSM(Rfn, Sfn, M):
             if not t:
                 canread = False
                 break
-#           if t[-1]=='\n':
-#               t = t[:-1]
             rowlist = t.strip().split(' ')
             lines.append(rowlist)
 
@@ -292,20 +290,187 @@ def fun_SortMerge(Rfn, Sfn, M):
         os.remove('blockS'+str(i)+'.txt')
 
 
+def fun_rollHash(s, N):
+    result = 0
+    for i in range(len(s)):
+        t = ord(s[i])-ord('a')
+        t *= (31**i)
+        result += t
+    return result % N
+
+
 def fun_openHJ(Rfn, Sfn, M):
+    # blk size will give number of tuples in each block and num blks is the number of buckets
+    BLK_SIZE = NUM_BLKS = M//2
+    MXTB = (BLK_SIZE)*TUPLE_PER_BLOCK  # max tuples per bucket
+
+    Rfiledata = []  # each element will store number of files - 1 and current nuber of lines
+    Rfptrs = []
+    for i in range(NUM_BLKS):
+        Rfiledata.append([0, 0])
+        Rfptrs.append(open('sublistR'+str(i)+'_0.txt', 'w'))
+
+    Rfptr = open(Rfn, 'r')
+    while True:
+        line = Rfptr.readline()
+        if not line:
+            break
+        rowlist = line.strip().split(' ')
+        bucketno = fun_rollHash(rowlist[1], NUM_BLKS)
+        Rfptrs[bucketno].write(line)
+        Rfiledata[bucketno][1] += 1
+        if Rfiledata[bucketno][1] == MXTB:
+            Rfiledata[bucketno][1] = 0
+            Rfiledata[bucketno][0] += 1
+            Rfptrs[bucketno].close()
+            Rfptrs[bucketno] = open(
+                'sublistR'+str(bucketno)+'_'+str(Rfiledata[bucketno][0])+'.txt', 'w')
+    Rfptr.close()
+    for i in range(NUM_BLKS):
+        Rfptrs[i].close()
+
+    Sfiledata = []  # each element will store number of files - 1 and current nuber of lines
+    Sfptrs = []
+    for i in range(NUM_BLKS):
+        Sfiledata.append([0, 0])
+        Sfptrs.append(open('sublistS'+str(i)+'_0.txt', 'w'))
+
+    Sfptr = open(Sfn, 'r')
+    while True:
+        line = Sfptr.readline()
+        if not line:
+            break
+        rowlist = line.strip().split(' ')
+        bucketno = fun_rollHash(rowlist[0], NUM_BLKS)
+        Sfptrs[bucketno].write(line)
+        Sfiledata[bucketno][1] += 1
+        if Sfiledata[bucketno][1] == MXTB:
+            Sfiledata[bucketno][1] = 0
+            Sfiledata[bucketno][0] += 1
+            Sfptrs[bucketno].close()
+            Sfptrs[bucketno] = open(
+                'sublistS'+str(bucketno)+'_'+str(Sfiledata[bucketno][0])+'.txt', 'w')
+    Sfptr.close()
+    for i in range(NUM_BLKS):
+        Sfptrs[i].close()
+
+    return Rfiledata, Sfiledata
+    '''
     Rsize = os.path.getsize(Rfn)
     Ssize = os.path.getsize(Sfn)
     if Rsize > Ssize:
-        smallerfn = Rfn
-        biggerfn = Sfn
+        Sfptr = open(Sfn, 'r')
+        while True:
+            line = Sfptr.readline()
+            if not line:
+                break
+            rowlist = line.strip().split(' ')
+            bucket = open('buck'+rowlist[0], 'a')
+            bucket.write(rowlist[1]+' ')
+            bucket.close()
+        Sfptr.close()
+
+        Rfptr = open(Rfn, 'r')
+        numRblk = 0
+        count = 0
+        Rblk = open('blockR0.txt', 'w')
+        while True:
+            line = Rfptr.readline()
+            if not line:
+                break
+            count += 1
+            if count == TUPLE_PER_BLOCK:
+                count = 0
+                numRblk += 1
+                Sblk.close()
+                Sblk = open('blockR'+str(numRblk)+'.txt', 'w')
+            Rblk.write(line)
+        Rblk.close()
+        Rfptr.close()
+        return numRblk
     else:
-        smallerfn = Sfn
-        biggerfn = Rfn
-    
+        Rfptr = open(Rfn, 'r')
+        while True:
+            line = Rfptr.readline()
+            if not line:
+                break
+            rowlist = line.strip().split(' ')
+            bucket = open('buck'+rowlist[1], 'a')
+            bucket.write(rowlist[0]+' ')
+            bucket.close()
+        Rfptr.close()
+
+        Sfptr = open(Sfn, 'r')
+        numSblk = 0
+        count = 0
+        Sblk = open('blockS0.txt', 'w')
+        while True:
+            line = Sfptr.readline()
+            if not line:
+                break
+            count += 1
+            if count == TUPLE_PER_BLOCK:
+                count = 0
+                numSblk += 1
+                Sblk.close()
+                Sblk = open('blockS'+str(numSblk)+'.txt', 'w')
+            Sblk.write(line)
+        Sblk.close()
+        Sfptr.close()
+        return numSblk
+        '''
+
+
+def fun_list2lols(l):
+    for i in range(len(l)):
+        t = None
 
 
 def fun_HashJoin(Rfn, Sfn, M):
-    BR, BS, blockR, blockS = fun_openHJ(Rfn, Sfn, M)
+    Rfiledata, Sfiledata = fun_openHJ(Rfn, Sfn, M)
+    NUM_BUCKETS = M//2
+
+    joinfile = open(os.path.basename(Rfn)+'_' +
+                    os.path.basename(Sfn)+'_join.txt', 'w')
+
+    # i is bucket number.
+    # go over each bucket one by one and each file of each bucket.
+    for i in range(NUM_BUCKETS):
+
+        Rbucket = Rfiledata[i]  # data about ith bucket of R
+        Sbucket = Sfiledata[i]
+
+        # go over each R bucket file one by one.
+        # for each file get all lines and prepare a dictionary Rd to store a list for each Y value.
+        for j in range(Rbucket[0]+1):
+            Rfile = open('sublistR'+str(i)+'_'+str(j)+'.txt')
+            allRlines = Rfile.readlines()
+            Rfile.close()
+            Rd = {}
+            for w in range(len(allRlines)):
+                rowlist = allRlines[w].strip().split(' ')
+                if rowlist[1] in Rd.keys():
+                    Rd[rowlist[1]].append(rowlist[0])
+                else:
+                    Rd[rowlist[1]] = [rowlist[0]]
+
+            for k in range(Sbucket[0]+1):
+                Sfile = open('sublistS'+str(i)+'_'+str(k)+'.txt')
+                allSlines = Sfile.readlines()
+                Sfile.close()
+                for w in range(len(allSlines)):
+                    rowlist = allSlines[w].strip().split(' ')
+                    if rowlist[0] in Rd.keys():
+                        t = []
+                        for z in range(len(Rd[rowlist[0]])):
+                            t.append(Rd[rowlist[0]][z]+' '+rowlist[0]+' '+rowlist[1]+'\n')
+                        #joinfile.write(Rd[rowlist[0]]+' ' +
+                        #               rowlist[0]+' '+rowlist[1]+'\n')
+                        joinfile.writelines(t)
+
+    joinfile.close()
+    for filename in glob.glob('sublist*'):
+        os.remove(filename)
 
 
 def test():
@@ -328,11 +493,12 @@ def main():
     Sfn = sys.argv[2]  # filename of S
     join_type = sys.argv[3]
     M = int(sys.argv[4])
-    # test()
+    test()
     if join_type == 'sort':
         fun_SortMerge(Rfn, Sfn, M)
         pass
     else:
+        fun_HashJoin(Rfn, Sfn, M)
         pass
 
 
