@@ -2,7 +2,6 @@ from os.path import join
 import sys
 import os
 import glob
-import time
 
 TUPLE_PER_BLOCK = 100
 
@@ -443,11 +442,11 @@ def fun_HashJoin(Rfn, Sfn, M):
 
 
 def test():
-    R = open('..\inputR', 'r')
+    R = open('../inputR', 'r')
     outputfile = open('mytest.txt', 'w')
     r = R.readline()
     while r:
-        S = open('..\inputS', 'r')
+        S = open('../inputS', 'r')
         s = S.readline()
         while s:
             if r.strip().split(' ')[1] == s.strip().split(' ')[0]:
@@ -463,16 +462,13 @@ def main():
     Sfn = sys.argv[2]  # filename of S
     join_type = sys.argv[3]
     M = int(sys.argv[4])
-    #test()
-    start = time.time()
+    test()
+    return
     if join_type == 'sort':
         fun_SortMerge(Rfn, Sfn, M)
     else:
         fun_HashJoin(Rfn, Sfn, M)
     end = time.time()
-    tf = open('timing.txt', 'a')
-    tf.write(str(M) + ' ' + str(end-start)+'\n')
-    tf.close()
 
 
 if __name__ == '__main__':
